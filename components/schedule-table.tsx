@@ -61,11 +61,15 @@ export function ScheduleTable({ schedule }: ScheduleTableProps) {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[120px] min-w-[120px]">Vị Trí</TableHead>
-                {schedule.days.map((day) => (
-                  <TableHead key={day} className="min-w-[100px] whitespace-nowrap">
-                    {day}
-                  </TableHead>
-                ))}
+                {schedule.days.map((day, idx) => {
+                  const shiftLabel = idx % 3 === 0 ? 'Ca1' : idx % 3 === 1 ? 'Ca2' : 'Ca3';
+                  return (
+                    <TableHead key={`${day}-${idx}`} className="min-w-[100px] whitespace-nowrap text-center">
+                      <div className="text-xs text-muted-foreground">{shiftLabel}</div>
+                      {day}
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             </TableHeader>
             <TableBody>
