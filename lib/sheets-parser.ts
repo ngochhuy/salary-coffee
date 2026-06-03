@@ -1,5 +1,4 @@
 import Papa from 'papaparse';
-import { SHIFT_PATTERNS, SHIFT_HOURS } from './constants';
 import { ShiftData, ParsedSchedule } from '@/types';
 
 /**
@@ -91,8 +90,9 @@ export function parseCell(cellValue: string, date: string, columnOffset: number)
 
   // PRIORITY 1: Check content markers first
 
-  // Pattern 1: "Nhật M - 14h" (shift with end time)
-  const withTimeMatch = trimmed.match(SHIFT_PATTERNS.withTime);
+  // Pattern 1: "Nhật M - 14h" or "Linh M - 14h (thử việc)" (shift with end time)
+  // Support optional parenthetical notes at the end
+  const withTimeMatch = trimmed.match(/^(.+?) ([MN])\s+[-–—]\s*(\d+)h(?:\s*\(.*?\))?$/);
   if (withTimeMatch) {
     return {
       employee: withTimeMatch[1].trim(),
@@ -102,8 +102,8 @@ export function parseCell(cellValue: string, date: string, columnOffset: number)
     };
   }
 
-  // Pattern 2: "Thu Na N" or "Nhật M" (shift marker)
-  const shiftOnlyMatch = trimmed.match(SHIFT_PATTERNS.shiftOnly);
+  // Pattern 2: "Thu Na N" or "Nhật M (thử việc)" (shift marker with optional notes)
+  const shiftOnlyMatch = trimmed.match(/^(.+?) ([MN])(?:\s*\(.*?\))?$/);
   if (shiftOnlyMatch) {
     return {
       employee: shiftOnlyMatch[1].trim(),
@@ -113,8 +113,9 @@ export function parseCell(cellValue: string, date: string, columnOffset: number)
     };
   }
 
-  // Pattern 3: "Lan 10h-18h" or "Thu Na 15h30 - 22h00" (custom hours)
-  const customMatch = trimmed.match(SHIFT_PATTERNS.customRange);
+  // Pattern 3: "Lan 10h-18h" or "Thu Na 15h30 - 22h00" (custom hours with both start and end)
+  // Support optional parenthetical notes at the end
+  const customMatch = trimmed.match(/^(.+?)\s+(\d{1,2})h(\d{2})?\s*[-–—]\s*(\d{1,2})h(\d{2})?(?:\s*\(.*?\))?$/);
   if (customMatch) {
     // Group 1: employee, 2: start hour, 3: start minute (optional), 4: end hour, 5: end minute (optional)
     const startHour = parseInt(customMatch[2], 10);
@@ -136,6 +137,48 @@ export function parseCell(cellValue: string, date: string, columnOffset: number)
       date,
       columnOffset,
     };
+  }
+
+  // Pattern 3.5: "Phúc - 9h30" or "Hùng - 14h" or "Phúc - 9h30 (thử việc)" (only end time, start time based on column)
+  // This handles cases where employee works partial shift, ending at specified time
+  // Support all dash types: hyphen (-), en dash (–), em dash (—)
+  // Support optional parenthetical notes at the end
+  const endTimeOnlyMatch = trimmed.match(/^(.+?)\s+[-–—]\s*(\d{1,2})h(\d{2})?(?:\s*\(.*?\))?$/);
+  if (endTimeOnlyMatch) {
+    const endHour = parseInt(endTimeOnlyMatch[2], 10);
+    const endMinute = endTimeOnlyMatch[3] ? parseInt(endTimeOnlyMatch[3], 10) : 0;
+    const endDecimal = endHour + endMinute / 60;
+
+    // Start time based on column position (ca1/ca2/ca3)
+    let startDecimal: number;
+    const shiftColumn = columnOffset % 3;
+
+    if (shiftColumn === 0) {
+      // Ca 1: 6:30
+      startDecimal = 6.5;
+    } else if (shiftColumn === 1) {
+      // Ca 2: 12:00
+      startDecimal = 12;
+    } else {
+      // Ca 3: 18:00
+      startDecimal = 18;
+    }
+
+    // Validate: end time must be after start time
+    const hours = endDecimal - startDecimal;
+    if (hours > 0 && hours <= 12) {
+      return {
+        employee: endTimeOnlyMatch[1].trim(),
+        shiftType: 'custom',
+        customHours: {
+          start: startDecimal,
+          end: endDecimal,
+        },
+        date,
+        columnOffset,
+      };
+    }
+    // If invalid, fall through to column-based shift
   }
 
   // PRIORITY 2: Fall back to column position for all shift types
@@ -385,17 +428,20 @@ export function parseCSV(csvText: string): ParsedSchedule {
 
         // Clean the name by removing shift details and notes
         // Pattern 1: Remove attached shift marker BEFORE time "PhươngM -14h" → "Phương"
-        const attachedShiftBeforeTimeMatch = cleanedName.match(/[MN]\s+-\s*\d+h\d*\b/);
+        // Support all dash types: hyphen (-), en dash (–), em dash (—)
+        const attachedShiftBeforeTimeMatch = cleanedName.match(/[MN]\s+[-–—]\s*\d+h\d*\b/);
         if (attachedShiftBeforeTimeMatch) {
           cleanedName = cleanedName.substring(0, attachedShiftBeforeTimeMatch.index).trim();
         }
         // Pattern 2: Remove shift markers with time "M -14h", "M - 14h", "M -9h30"
-        const timeWithShiftMatch = cleanedName.match(/\s+[MN]\s+-\s*\d+h\d*\b/);
+        // Support all dash types: hyphen (-), en dash (–), em dash (—)
+        const timeWithShiftMatch = cleanedName.match(/\s+[MN]\s+[-–—]\s*\d+h\d*\b/);
         if (timeWithShiftMatch) {
           cleanedName = cleanedName.substring(0, timeWithShiftMatch.index).trim();
         }
         // Pattern 3: Remove just time marker " -14h", "-9h30" (no M/N)
-        const timeOnlyMatch = cleanedName.match(/\s+-\s*\d+h\d*\b/);
+        // Support all dash types: hyphen (-), en dash (–), em dash (—)
+        const timeOnlyMatch = cleanedName.match(/\s+[-–—]\s*\d+h\d*\b/);
         if (timeOnlyMatch) {
           cleanedName = cleanedName.substring(0, timeOnlyMatch.index).trim();
         }

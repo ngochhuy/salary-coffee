@@ -357,12 +357,14 @@ function cleanEmployeeName(name: string): string | null {
     cleanedName = cleanedName.substring(0, attachedShiftBeforeTimeMatch.index).trim();
   }
   // Pattern 2: Remove shift markers with time "M -14h", "M - 14h", "M -9h30"
-  const timeWithShiftMatch = cleanedName.match(/\s+[MN]\s+-\s*\d+h\d*\b/);
+  // Support all dash types: hyphen (-), en dash (–), em dash (—)
+  const timeWithShiftMatch = cleanedName.match(/\s+[MN]\s+[-–—]\s*\d+h\d*\b/);
   if (timeWithShiftMatch) {
     cleanedName = cleanedName.substring(0, timeWithShiftMatch.index).trim();
   }
   // Pattern 3: Remove just time marker " -14h", "-9h30" (no M/N)
-  const timeOnlyMatch = cleanedName.match(/\s+-\s*\d+h\d*\b/);
+  // Support all dash types: hyphen (-), en dash (–), em dash (—)
+  const timeOnlyMatch = cleanedName.match(/\s+[-–—]\s*\d+h\d*\b/);
   if (timeOnlyMatch) {
     cleanedName = cleanedName.substring(0, timeOnlyMatch.index).trim();
   }
