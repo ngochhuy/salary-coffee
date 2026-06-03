@@ -10,12 +10,14 @@ interface MonthSelectorProps {
   monthlyData: MonthlySalaryCalculation[];
   selectedMonth: string | 'all';
   onMonthChange: (month: string | 'all') => void;
+  className?: string;
 }
 
 export function MonthSelector({
   monthlyData,
   selectedMonth,
   onMonthChange,
+  className,
 }: MonthSelectorProps) {
   const months = ['all', ...monthlyData.map((m) => m.month)];
   const currentIndex = months.indexOf(selectedMonth);
@@ -39,7 +41,7 @@ export function MonthSelector({
   };
 
   return (
-    <Card className="border-amber-200 bg-white/80 backdrop-blur-sm shadow-coffee hover-lift">
+    <Card className={`border-amber-200 bg-white/80 backdrop-blur-sm shadow-coffee hover-lift ${className || ''}`}>
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -82,7 +84,7 @@ export function MonthSelector({
             className={
               selectedMonth === 'all'
                 ? 'bg-gradient-to-r from-amber-700 to-amber-800 text-white border-0 press-effect'
-                : 'border-amber-200 hover:bg-amber-50 text-amber-800 press-effect'
+                : 'border-amber-200 hover:bg-amber-50 text-amber-800 hover:text-amber-600 press-effect'
             }
           >
             Tất cả ({monthlyData.length} tháng)
@@ -96,7 +98,7 @@ export function MonthSelector({
               className={
                 selectedMonth === month.month
                   ? 'bg-gradient-to-r from-amber-700 to-amber-800 text-white border-0 press-effect'
-                  : 'border-amber-200 hover:bg-amber-50 text-amber-800 press-effect'
+                  : 'border-amber-200 hover:bg-amber-50 text-amber-800 hover:text-amber-600 press-effect'
               }
             >
               {month.monthLabel}

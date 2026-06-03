@@ -3,12 +3,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ScheduleTable } from '@/components/schedule-table';
 import { WageInput } from '@/components/wage-input';
+import { WageInputDialog } from '@/components/wage-input-dialog';
 import { MonthSelector } from '@/components/month-selector';
 import { MonthlySalarySummary } from '@/components/monthly-salary-summary';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { RefreshCw, AlertCircle, Download } from 'lucide-react';
+import { RefreshCw, AlertCircle, Download, Wallet } from 'lucide-react';
 import {
   ParsedSchedule,
   EmployeeWage,
@@ -29,6 +30,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rawData, setRawData] = useState<any>(null); // Store raw API response for debugging
+  const [wageDialogOpen, setWageDialogOpen] = useState(false); // Wage dialog state
 
   // Save data to file for debugging (dev only)
   const saveDebugData = useCallback(async (data: any) => {
@@ -168,6 +170,14 @@ export default function HomePage() {
             </p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
+            {/* Nút Cập nhật bảng lương */}
+            <Button
+              onClick={() => setWageDialogOpen(true)}
+              className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white shadow-coffee press-effect"
+            >
+              <Wallet className="h-4 w-4 mr-2" />
+              Cập nhật bảng lương
+            </Button>
             {/* Debug button - only in dev mode */}
             {process.env.NODE_ENV === 'development' && rawData && (
               <Button
@@ -209,22 +219,11 @@ export default function HomePage() {
               onMonthChange={setSelectedMonth}
             />
 
-            {/* Two Column Layout */}
-            <div className="grid lg:grid-cols-2 gap-6">
-              {/* Wage Input */}
-              <WageInput
-                employees={employees}
-                onWagesChange={handleWageChange}
-              />
-
-              {/* Monthly Salary Summary */}
-              <div className="lg:col-span-1">
-                <MonthlySalarySummary
-                  monthlyData={monthlyCalculations}
-                  selectedMonth={selectedMonth}
-                />
-              </div>
-            </div>
+            {/* Monthly Salary Summary - Full Width */}
+            <MonthlySalarySummary
+              monthlyData={monthlyCalculations}
+              selectedMonth={selectedMonth}
+            />
 
             {/* Optional: Schedule Table (collapsible) */}
             <details className="group bg-white/60 backdrop-blur-sm rounded-2xl border border-amber-100 overflow-hidden hover-lift">
@@ -265,6 +264,14 @@ export default function HomePage() {
           </Card>
         )}
       </div>
+
+      {/* Wage Input Dialog */}
+      <WageInputDialog
+        employees={employees}
+        open={wageDialogOpen}
+        onOpenChange={setWageDialogOpen}
+        onWagesChange={handleWageChange}
+      />
     </main>
   );
 }
