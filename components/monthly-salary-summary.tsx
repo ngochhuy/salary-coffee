@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmployeeDetailDialog } from '@/components/employee-detail-dialog';
+import { Calculator, Printer } from 'lucide-react';
 
 interface MonthlySalarySummaryProps {
   monthlyData: MonthlySalaryCalculation[];
@@ -42,12 +43,19 @@ export function MonthlySalarySummary({
 
   if (displayData.length === 0) {
     return (
-      <Card>
+      <Card className="border-amber-200 bg-white/80 backdrop-blur-sm shadow-coffee">
         <CardHeader>
-          <CardTitle>Bảng Lương</CardTitle>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+              <Calculator className="h-4 w-4 text-amber-700" />
+            </div>
+            <CardTitle className="text-amber-900 font-heading">Bảng Lương</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">Không có dữ liệu để hiển thị.</p>
+          <div className="text-center py-8">
+            <p className="text-amber-700/70">Không có dữ liệu để hiển thị.</p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -73,60 +81,71 @@ export function MonthlySalarySummary({
 
   return (
     <>
-      <Card>
-        <CardHeader>
+      <Card className="border-amber-200 bg-white/80 backdrop-blur-sm shadow-coffee hover-lift">
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle>Bảng Lương</CardTitle>
-            <Button onClick={() => window.print()} variant="outline" size="sm">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                <Calculator className="h-4 w-4 text-amber-700" />
+              </div>
+              <CardTitle className="text-amber-900 font-heading">Bảng Lương</CardTitle>
+            </div>
+            <Button
+              onClick={() => window.print()}
+              variant="outline"
+              size="sm"
+              className="border-amber-200 hover:bg-amber-50 text-amber-800 press-effect"
+            >
+              <Printer className="h-4 w-4 mr-1" />
               In / Lưu PDF
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {displayData.map((month) => (
-            <div key={month.month} className="space-y-3">
-              <div className="flex items-center justify-between border-b pb-2">
+            <div key={month.month} className="space-y-4">
+              <div className="flex items-center justify-between border-b border-amber-200 pb-3">
                 <div>
-                  <h3 className="text-lg font-semibold">{month.monthLabel}</h3>
-                  <p className="text-xs text-muted-foreground">
+                  <h3 className="text-lg font-semibold text-amber-900">{month.monthLabel}</h3>
+                  <p className="text-xs text-amber-700/70">
                     {month.dateRange.start} đến {month.dateRange.end}
                   </p>
                 </div>
-                <Badge variant="secondary">
+                <Badge className="bg-amber-100 text-amber-800 border-amber-200">
                   {month.employees.length} nhân viên
                 </Badge>
               </div>
 
-              <div className="rounded-md border overflow-x-auto scrollbar-thin">
+              <div className="rounded-xl border border-amber-200 overflow-hidden bg-white/50">
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nhân viên</TableHead>
-                      <TableHead className="text-right">Ngày làm</TableHead>
-                      <TableHead className="text-right">Tổng giờ</TableHead>
-                      <TableHead className="text-right">Lương cơ bản</TableHead>
-                      <TableHead className="text-right">Trợ cấp</TableHead>
-                      <TableHead className="text-right">Tổng nhận</TableHead>
+                  <TableHeader className="bg-amber-50/50">
+                    <TableRow className="hover:bg-amber-50/50 border-amber-200">
+                      <TableHead className="text-amber-900 font-semibold">Nhân viên</TableHead>
+                      <TableHead className="text-right text-amber-900 font-semibold">Ngày làm</TableHead>
+                      <TableHead className="text-right text-amber-900 font-semibold">Tổng giờ</TableHead>
+                      <TableHead className="text-right text-amber-900 font-semibold">Lương cơ bản</TableHead>
+                      <TableHead className="text-right text-amber-900 font-semibold">Trợ cấp</TableHead>
+                      <TableHead className="text-right text-amber-900 font-semibold">Tổng nhận</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {month.employees.map((emp) => (
                       <TableRow
                         key={emp.employeeName}
-                        className="cursor-pointer hover:bg-muted/50"
+                        className="cursor-pointer hover:bg-amber-50/80 transition-colors border-amber-100"
                         onClick={() => handleEmployeeClick(emp, month.monthLabel)}
                       >
-                        <TableCell className="font-medium">
+                        <TableCell className="font-medium text-amber-900">
                           {emp.employeeName}
-                          <span className="ml-2 text-xs text-muted-foreground">👁️</span>
+                          <span className="ml-2 text-xs text-amber-600 opacity-60">👁️</span>
                         </TableCell>
-                        <TableCell className="text-right">{emp.daysWorked}</TableCell>
-                        <TableCell className="text-right">{formatHours(emp.totalHours)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(emp.totalSalary)}</TableCell>
-                        <TableCell className="text-right text-green-600">
+                        <TableCell className="text-right text-amber-800">{emp.daysWorked}</TableCell>
+                        <TableCell className="text-right text-amber-800">{formatHours(emp.totalHours)}</TableCell>
+                        <TableCell className="text-right text-amber-800">{formatCurrency(emp.totalSalary)}</TableCell>
+                        <TableCell className="text-right text-green-700 font-medium">
                           +{formatCurrency(emp.totalAllowance)}
                         </TableCell>
-                        <TableCell className="text-right font-bold text-primary">
+                        <TableCell className="text-right font-bold text-amber-900">
                           {formatCurrency(emp.finalSalary)}
                         </TableCell>
                       </TableRow>
@@ -135,24 +154,26 @@ export function MonthlySalarySummary({
                 </Table>
               </div>
 
-              <div className="flex justify-end text-sm text-muted-foreground space-x-4">
-                <span>Tổng tháng {month.monthLabel}:</span>
+              <div className="flex justify-end text-sm text-amber-700 space-x-4 bg-amber-50/50 rounded-lg p-3">
+                <span className="font-medium">Tổng tháng {month.monthLabel}:</span>
                 <span>{formatHours(month.totalHours)}</span>
-                <span className="text-blue-600">Cơ bản: {formatCurrency(month.totalSalary)}</span>
-                <span className="text-green-600">+ Trợ cấp: {formatCurrency(month.totalAllowance)}</span>
-                <span className="font-bold">= {formatCurrency(month.finalSalary)}</span>
+                <span className="text-amber-800">Cơ bản: {formatCurrency(month.totalSalary)}</span>
+                <span className="text-green-700">+ Trợ cấp: {formatCurrency(month.totalAllowance)}</span>
+                <span className="font-bold text-amber-900">= {formatCurrency(month.finalSalary)}</span>
               </div>
             </div>
           ))}
 
-          <div className="border-t pt-4">
-            <div className="flex justify-between items-center text-lg font-bold">
-              <span>Tổng cộng:</span>
-              <span className="flex gap-4 flex-wrap justify-end">
-                <span>{formatHours(totalHours)}</span>
-                <span className="text-blue-600">{formatCurrency(totalSalary)}</span>
-                <span className="text-green-600">+{formatCurrency(totalAllowance)}</span>
-                <span className="text-primary font-bold">= {formatCurrency(totalFinalSalary)}</span>
+          <div className="border-t-2 border-amber-300 pt-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4">
+            <div className="flex justify-between items-center text-lg">
+              <span className="font-bold text-amber-900">Tổng cộng:</span>
+              <span className="flex gap-3 sm:gap-4 flex-wrap justify-end">
+                <span className="text-amber-800">{formatHours(totalHours)}</span>
+                <span className="text-amber-900">{formatCurrency(totalSalary)}</span>
+                <span className="text-green-700 font-medium">+{formatCurrency(totalAllowance)}</span>
+                <span className="font-bold text-amber-900 text-xl bg-gradient-to-r from-amber-700 to-amber-800 bg-clip-text text-transparent">
+                  = {formatCurrency(totalFinalSalary)}
+                </span>
               </span>
             </div>
           </div>

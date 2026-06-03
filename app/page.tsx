@@ -150,38 +150,50 @@ export default function HomePage() {
   }, [rawData]);
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="container mx-auto p-6 max-w-7xl space-y-8">
-        {/* Header with Refresh Button */}
-        <header className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight">
-              Tính Lương Nhân Viên
-            </h1>
+    <main className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
+      <div className="container mx-auto px-4 py-8 md:p-8 max-w-7xl space-y-8">
+        {/* Header with Coffee Theme */}
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-700 to-amber-900 flex items-center justify-center shadow-coffee">
+                <span className="text-xl">☕</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-heading font-bold text-gradient-coffee">
+                Tính Lương
+              </h1>
+            </div>
+            <p className="text-sm text-amber-800/70 font-body pl-12">
+              Quản lý lương nhân viên cửa hàng coffee
+            </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             {/* Debug button - only in dev mode */}
             {process.env.NODE_ENV === 'development' && rawData && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleManualSave}
-                className="text-xs"
+                className="text-xs border-amber-200 hover:bg-amber-50"
               >
                 <Download className="h-3 w-3 mr-1" />
                 Save Debug
               </Button>
             )}
-            <Button onClick={handleFetchSchedule} disabled={loading}>
+            <Button
+              onClick={handleFetchSchedule}
+              disabled={loading}
+              className="flex-1 sm:flex-none bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white shadow-coffee press-effect"
+            >
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               {loading ? 'Đang cập nhật...' : 'Cập nhật lịch'}
             </Button>
           </div>
         </header>
 
-        {/* Error Display */}
+        {/* Error Display with Coffee Theme */}
         {error && (
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="border-red-200 bg-red-50 text-red-900">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
@@ -189,7 +201,7 @@ export default function HomePage() {
 
         {/* Main Content - Show After Schedule Loaded */}
         {schedule && (
-          <div className="space-y-8">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Month Selector */}
             <MonthSelector
               monthlyData={monthlyCalculations}
@@ -198,7 +210,7 @@ export default function HomePage() {
             />
 
             {/* Two Column Layout */}
-            <div className="grid lg:grid-cols-2 gap-8">
+            <div className="grid lg:grid-cols-2 gap-6">
               {/* Wage Input */}
               <WageInput
                 employees={employees}
@@ -215,27 +227,38 @@ export default function HomePage() {
             </div>
 
             {/* Optional: Schedule Table (collapsible) */}
-            <details className="group">
-              <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground select-none">
-                Xem lịch chi tiết ▼
+            <details className="group bg-white/60 backdrop-blur-sm rounded-2xl border border-amber-100 overflow-hidden hover-lift">
+              <summary className="cursor-pointer px-6 py-4 text-sm font-medium text-amber-800 hover:text-amber-900 hover:bg-amber-50/50 transition-colors select-none flex items-center justify-between">
+                <span>Xem lịch chi tiết</span>
+                <span className="transform group-open:rotate-180 transition-transform">▼</span>
               </summary>
-              <ScheduleTable schedule={schedule} />
+              <div className="px-6 pb-6">
+                <ScheduleTable schedule={schedule} />
+              </div>
             </details>
           </div>
         )}
 
-        {/* Empty State */}
+        {/* Empty State with Coffee Theme */}
         {!schedule && !loading && (
-          <Card>
+          <Card className="border-amber-200 bg-white/80 backdrop-blur-sm shadow-coffee">
             <CardContent className="pt-6">
-              <div className="text-center py-12">
-                <p className="text-muted-foreground text-lg">
-                  {!SHEET_URL ? 'Chưa cấu hình URL Google Sheets' : 'Đang tải dữ liệu...'}
+              <div className="text-center py-16 px-6">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-amber-100 flex items-center justify-center">
+                  <span className="text-4xl">☕</span>
+                </div>
+                <h3 className="text-xl font-heading font-semibold text-amber-900 mb-2">
+                  {!SHEET_URL ? 'Chưa cấu hình Google Sheets' : 'Đang tải dữ liệu...'}
+                </h3>
+                <p className="text-amber-700/70 mb-6">
+                  {!SHEET_URL
+                    ? 'Vui lòng cấu hình URL Google Sheets để bắt đầu tính lương'
+                    : 'Vui lòng đợi trong giây lát...'}
                 </p>
                 {!SHEET_URL && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Vui lòng tạo file .env.local với NEXT_PUBLIC_SHEET_URL
-                  </p>
+                  <div className="inline-block px-4 py-2 bg-amber-100 rounded-lg text-sm text-amber-800">
+                    <code className="text-xs">NEXT_PUBLIC_SHEET_URL=your_sheet_url</code>
+                  </div>
                 )}
               </div>
             </CardContent>

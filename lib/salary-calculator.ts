@@ -52,10 +52,14 @@ export function aggregateEmployeeData(
       const cell = schedule.cells[rowIdx][colIdx];
       if (!cell.employee) continue;
 
+      // Clean employee name before aggregating
+      const cleanedEmployee = cleanEmployeeName(cell.employee);
+      if (!cleanedEmployee) continue;
+
       const { hours, allowance, computedShiftType } = calculateShiftHours(cell);
       if (hours === 0) continue;
 
-      const current = employeeData.get(cell.employee) || {
+      const current = employeeData.get(cleanedEmployee) || {
         totalHours: 0,
         totalAllowance: 0,
         daysWorked: 0,
@@ -89,7 +93,7 @@ export function aggregateEmployeeData(
         allowance,
       });
 
-      employeeData.set(cell.employee, current);
+      employeeData.set(cleanedEmployee, current);
     }
   }
 
@@ -211,6 +215,10 @@ export function calculateMonthlySalaries(
       const cell = schedule.cells[rowIdx][colIdx];
       if (!cell.employee) continue;
 
+      // Clean employee name before aggregating
+      const cleanedEmployee = cleanEmployeeName(cell.employee);
+      if (!cleanedEmployee) continue;
+
       const month = parseMonthFromDay(cell.date);
       // Skip if date format is invalid
       if (month === 'unknown') continue;
@@ -225,7 +233,7 @@ export function calculateMonthlySalaries(
       }
 
       const monthInfo = monthlyData.get(month)!;
-      const current = monthInfo.employeeData.get(cell.employee) || {
+      const current = monthInfo.employeeData.get(cleanedEmployee) || {
         totalHours: 0,
         totalAllowance: 0,
         daysWorked: 0,
@@ -259,7 +267,7 @@ export function calculateMonthlySalaries(
         allowance,
       });
 
-      monthInfo.employeeData.set(cell.employee, current);
+      monthInfo.employeeData.set(cleanedEmployee, current);
     }
   }
 
@@ -313,7 +321,75 @@ export function calculateMonthlySalaries(
 }
 
 /**
+ * Invalid patterns for employee name filtering
+ */
+const invalidPatterns = [
+  /^CONTACT INFO$/i,
+  /^VỊ TRÍ/i,
+  /^BARISTA$/i,
+  /^LONG$/i,  // Owner name
+  /^\d+$/,
+  /^0\d{9}$/,
+  /^[`~!@#$%^&*()_+=\[\]{};':"\\|,.<>\/?]+$/,
+  /^[a-z0-9]$/i,
+];
+
+/**
+ * Clean employee name by removing shift details and notes
+ * "Dũng M - 14h (thứ việc)" → "Dũng"
+ * "Linh N (tv)" → "Linh"
+ */
+function cleanEmployeeName(name: string): string | null {
+  let cleanedName = name.trim();
+
+  if (!cleanedName || cleanedName.length < 2) return null;
+
+  // First check if it's completely invalid (phone, label, etc.)
+  const isInvalid = invalidPatterns.some(pattern => pattern.test(cleanedName));
+  if (isInvalid) {
+    return null;
+  }
+
+  // Clean the name by removing shift details and notes
+  // Pattern 1: Remove attached shift marker BEFORE time "PhươngM -14h" → "Phương"
+  const attachedShiftBeforeTimeMatch = cleanedName.match(/[MN]\s+-\s*\d+h\d*\b/);
+  if (attachedShiftBeforeTimeMatch) {
+    cleanedName = cleanedName.substring(0, attachedShiftBeforeTimeMatch.index).trim();
+  }
+  // Pattern 2: Remove shift markers with time "M -14h", "M - 14h", "M -9h30"
+  const timeWithShiftMatch = cleanedName.match(/\s+[MN]\s+-\s*\d+h\d*\b/);
+  if (timeWithShiftMatch) {
+    cleanedName = cleanedName.substring(0, timeWithShiftMatch.index).trim();
+  }
+  // Pattern 3: Remove just time marker " -14h", "-9h30" (no M/N)
+  const timeOnlyMatch = cleanedName.match(/\s+-\s*\d+h\d*\b/);
+  if (timeOnlyMatch) {
+    cleanedName = cleanedName.substring(0, timeOnlyMatch.index).trim();
+  }
+  // Pattern 4: Remove attached shift marker at END "PhươngM" → "Phương"
+  const attachedShiftMatch = cleanedName.match(/[MN]$/);
+  if (attachedShiftMatch && cleanedName.length > 1) {
+    cleanedName = cleanedName.substring(0, attachedShiftMatch.index).trim();
+  }
+  // Pattern 5: Remove any parenthetical notes like "(thứ việc)"
+  const parenMatch = cleanedName.match(/\s*\(.*\)?$/);
+  if (parenMatch) {
+    cleanedName = cleanedName.substring(0, parenMatch.index).trim();
+  }
+  // Pattern 6: Remove standalone shift markers with space at end " M", " N"
+  const shiftMatch = cleanedName.match(/\s+[MN]$/);
+  if (shiftMatch) {
+    cleanedName = cleanedName.substring(0, shiftMatch.index).trim();
+  }
+
+  if (cleanedName.length < 2) return null;
+
+  return cleanedName;
+}
+
+/**
  * Extract all unique employee names from schedule
+ * Names are cleaned to remove shift details and notes
  */
 export function extractEmployees(schedule: ParsedSchedule | null): string[] {
   if (!schedule) return [];
@@ -323,10 +399,16 @@ export function extractEmployees(schedule: ParsedSchedule | null): string[] {
   for (const row of schedule.cells) {
     for (const cell of row) {
       if (cell.employee) {
-        employeeSet.add(cell.employee);
+        const cleaned = cleanEmployeeName(cell.employee);
+        if (cleaned) {
+          console.log(`🧹 Clean: "${cell.employee}" → "${cleaned}"`);
+          employeeSet.add(cleaned);
+        }
       }
     }
   }
 
-  return Array.from(employeeSet).sort();
+  const result = Array.from(employeeSet).sort();
+  console.log('👥 Final employees:', result);
+  return result;
 }

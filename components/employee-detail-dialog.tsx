@@ -11,6 +11,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { User, Clock, Wallet, Coffee, TrendingUp } from 'lucide-react';
 
 interface EmployeeDetailDialogProps {
   employee: SalaryCalculation | null;
@@ -81,122 +82,143 @@ export function EmployeeDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
         <DialogHeader>
-          <DialogTitle className="text-2xl">{employee.employeeName}</DialogTitle>
-          <DialogDescription>
-            Chi tiết lương tháng {monthLabel || 'hiện tại'}
-          </DialogDescription>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-200 to-amber-300 flex items-center justify-center">
+              <User className="h-6 w-6 text-amber-800" />
+            </div>
+            <div>
+              <DialogTitle className="text-2xl text-amber-900 font-heading">{employee.employeeName}</DialogTitle>
+              <DialogDescription className="text-amber-700/70">
+                Chi tiết lương tháng {monthLabel || 'hiện tại'}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Card className="border-amber-200 bg-white/80 backdrop-blur-sm shadow-coffee hover-lift">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Tổng giờ</CardTitle>
+                <CardTitle className="text-xs font-medium text-amber-700/80 flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Tổng giờ
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatHours(employee.totalHours)}</div>
-                <div className="text-xs text-muted-foreground">{employee.daysWorked} ngày làm</div>
+                <div className="text-2xl font-bold text-amber-900">{formatHours(employee.totalHours)}</div>
+                <div className="text-xs text-amber-700/70">{employee.daysWorked} ngày làm</div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-amber-200 bg-white/80 backdrop-blur-sm shadow-coffee hover-lift">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Lương cơ bản</CardTitle>
+                <CardTitle className="text-xs font-medium text-amber-700/80 flex items-center gap-1">
+                  <Coffee className="h-3 w-3" />
+                  Lương cơ bản
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{formatCurrency(employee.totalSalary)}</div>
-                <div className="text-xs text-muted-foreground">{formatCurrency(employee.hourlyWage)}/giờ</div>
+                <div className="text-2xl font-bold text-amber-800">{formatCurrency(employee.totalSalary)}</div>
+                <div className="text-xs text-amber-700/70">{formatCurrency(employee.hourlyWage)}/giờ</div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-amber-200 bg-white/80 backdrop-blur-sm shadow-coffee hover-lift">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Trợ cấp</CardTitle>
+                <CardTitle className="text-xs font-medium text-amber-700/80 flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  Trợ cấp
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{formatCurrency(employee.totalAllowance)}</div>
-                <div className="text-xs text-muted-foreground">Ca &gt; 7h</div>
+                <div className="text-2xl font-bold text-green-700">{formatCurrency(employee.totalAllowance)}</div>
+                <div className="text-xs text-amber-700/70">Ca &gt; 7h</div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-amber-700/30 bg-gradient-to-br from-amber-700 to-amber-800 shadow-coffee">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Tổng nhận</CardTitle>
+                <CardTitle className="text-xs font-medium text-amber-100 flex items-center gap-1">
+                  <Wallet className="h-3 w-3" />
+                  Tổng nhận
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-primary">{formatCurrency(employee.finalSalary)}</div>
-                <div className="text-xs text-muted-foreground">Cơ bản + Trợ cấp</div>
+                <div className="text-2xl font-bold text-white">{formatCurrency(employee.finalSalary)}</div>
+                <div className="text-xs text-amber-200">Cơ bản + Trợ cấp</div>
               </CardContent>
             </Card>
           </div>
 
           {/* Shift Breakdown */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Thống kê ca làm việc</CardTitle>
+          <Card className="border-amber-200 bg-white/80 backdrop-blur-sm shadow-coffee">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-amber-900 font-heading text-lg">Thống kê ca làm việc</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
-                <div className="space-y-1">
-                  <div className="text-2xl font-bold">{employee.shiftBreakdown['M-14h']}</div>
-                  <div className="text-xs text-muted-foreground">Ca M - 14h</div>
+                <div className="p-3 rounded-lg bg-amber-50 text-center">
+                  <div className="text-2xl font-bold text-amber-900">{employee.shiftBreakdown['M-14h']}</div>
+                  <div className="text-xs text-amber-700/70 mt-1">Ca M - 14h</div>
                 </div>
-                <div className="space-y-1">
-                  <div className="text-2xl font-bold">{employee.shiftBreakdown['M']}</div>
-                  <div className="text-xs text-muted-foreground">Ca M</div>
+                <div className="p-3 rounded-lg bg-amber-50 text-center">
+                  <div className="text-2xl font-bold text-amber-900">{employee.shiftBreakdown['M']}</div>
+                  <div className="text-xs text-amber-700/70 mt-1">Ca M</div>
                 </div>
-                <div className="space-y-1">
-                  <div className="text-2xl font-bold">{employee.shiftBreakdown['N']}</div>
-                  <div className="text-xs text-muted-foreground">Ca N</div>
+                <div className="p-3 rounded-lg bg-orange-50 text-center">
+                  <div className="text-2xl font-bold text-orange-900">{employee.shiftBreakdown['N']}</div>
+                  <div className="text-xs text-orange-700/70 mt-1">Ca N</div>
                 </div>
-                <div className="space-y-1">
-                  <div className="text-2xl font-bold">{employee.shiftBreakdown['ca3']}</div>
-                  <div className="text-xs text-muted-foreground">Ca 3</div>
+                <div className="p-3 rounded-lg bg-amber-50 text-center">
+                  <div className="text-2xl font-bold text-amber-900">{employee.shiftBreakdown['ca3']}</div>
+                  <div className="text-xs text-amber-700/70 mt-1">Ca 3</div>
                 </div>
-                <div className="space-y-1">
-                  <div className="text-2xl font-bold">{employee.shiftBreakdown['custom']}</div>
-                  <div className="text-xs text-muted-foreground">Tùy chỉnh</div>
+                <div className="p-3 rounded-lg bg-amber-50 text-center">
+                  <div className="text-2xl font-bold text-amber-900">{employee.shiftBreakdown['custom']}</div>
+                  <div className="text-xs text-amber-700/70 mt-1">Tùy chỉnh</div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Shift Details Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Chi tiết từng ca</CardTitle>
+          <Card className="border-amber-200 bg-white/80 backdrop-blur-sm shadow-coffee">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-amber-900 font-heading text-lg">Chi tiết từng ca</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border overflow-x-auto scrollbar-thin">
+              <div className="rounded-xl border border-amber-200 overflow-hidden bg-white/50">
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Ngày</TableHead>
-                      <TableHead>Loại ca</TableHead>
-                      <TableHead className="text-right">Số giờ</TableHead>
-                      <TableHead className="text-right">Trợ cấp</TableHead>
-                      <TableHead className="text-right">Thành tiền</TableHead>
+                  <TableHeader className="bg-amber-50/50">
+                    <TableRow className="hover:bg-amber-50/50 border-amber-200">
+                      <TableHead className="text-amber-900 font-semibold">Ngày</TableHead>
+                      <TableHead className="text-amber-900 font-semibold">Loại ca</TableHead>
+                      <TableHead className="text-right text-amber-900 font-semibold">Số giờ</TableHead>
+                      <TableHead className="text-right text-amber-900 font-semibold">Trợ cấp</TableHead>
+                      <TableHead className="text-right text-amber-900 font-semibold">Thành tiền</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {sortedShifts.map((shift, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell className="font-medium">{shift.date}</TableCell>
+                      <TableRow key={idx} className="hover:bg-amber-50/50 border-amber-100">
+                        <TableCell className="font-medium text-amber-900">{shift.date}</TableCell>
                         <TableCell>
-                          <Badge variant="outline">{SHIFT_TYPE_LABELS[shift.shiftType] || shift.shiftType}</Badge>
+                          <Badge variant="outline" className="border-amber-200 text-amber-800 bg-amber-50">
+                            {SHIFT_TYPE_LABELS[shift.shiftType] || shift.shiftType}
+                          </Badge>
                         </TableCell>
-                        <TableCell className="text-right">{formatHours(shift.hours)}</TableCell>
+                        <TableCell className="text-right text-amber-800">{formatHours(shift.hours)}</TableCell>
                         <TableCell className="text-right">
                           {shift.allowance > 0 ? (
-                            <span className="text-green-600">+{formatCurrency(shift.allowance)}</span>
+                            <span className="text-green-700 font-medium">+{formatCurrency(shift.allowance)}</span>
                           ) : (
-                            <span className="text-muted-foreground">-</span>
+                            <span className="text-amber-700/50">-</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right font-medium">
+                        <TableCell className="text-right font-bold text-amber-900">
                           {formatCurrency((shift.hours * employee.hourlyWage) + shift.allowance)}
                         </TableCell>
                       </TableRow>

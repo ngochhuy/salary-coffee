@@ -4,7 +4,7 @@ import { MonthlySalaryCalculation } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 
 interface MonthSelectorProps {
   monthlyData: MonthlySalaryCalculation[];
@@ -39,20 +39,26 @@ export function MonthSelector({
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-amber-200 bg-white/80 backdrop-blur-sm shadow-coffee hover-lift">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle>Chọn Tháng</CardTitle>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+              <Calendar className="h-4 w-4 text-amber-700" />
+            </div>
+            <CardTitle className="text-amber-900 font-heading">Chọn Tháng</CardTitle>
+          </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="icon"
               onClick={goToPrevious}
               disabled={currentIndex === 0}
+              className="border-amber-200 hover:bg-amber-50 disabled:opacity-40 press-effect"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Badge variant="secondary" className="px-4 py-2 text-base">
+            <Badge className="px-4 py-2 text-base bg-gradient-to-r from-amber-700 to-amber-800 text-white border-0 shadow-sm">
               {getCurrentLabel()}
             </Badge>
             <Button
@@ -60,6 +66,7 @@ export function MonthSelector({
               size="icon"
               onClick={goToNext}
               disabled={currentIndex === months.length - 1}
+              className="border-amber-200 hover:bg-amber-50 disabled:opacity-40 press-effect"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -72,6 +79,11 @@ export function MonthSelector({
             variant={selectedMonth === 'all' ? 'default' : 'outline'}
             size="sm"
             onClick={() => onMonthChange('all')}
+            className={
+              selectedMonth === 'all'
+                ? 'bg-gradient-to-r from-amber-700 to-amber-800 text-white border-0 press-effect'
+                : 'border-amber-200 hover:bg-amber-50 text-amber-800 press-effect'
+            }
           >
             Tất cả ({monthlyData.length} tháng)
           </Button>
@@ -81,6 +93,11 @@ export function MonthSelector({
               variant={selectedMonth === month.month ? 'default' : 'outline'}
               size="sm"
               onClick={() => onMonthChange(month.month)}
+              className={
+                selectedMonth === month.month
+                  ? 'bg-gradient-to-r from-amber-700 to-amber-800 text-white border-0 press-effect'
+                  : 'border-amber-200 hover:bg-amber-50 text-amber-800 press-effect'
+              }
             >
               {month.monthLabel}
             </Button>

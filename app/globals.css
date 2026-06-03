@@ -4,48 +4,55 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Coffee-inspired Warm Palette */
+    --background: 47 100% 96%; /* Cream #FEF3C7 - warm cream background */
+    --foreground: 27 42% 18%; /* Coffee brown #78350F */
+    --card: 0 0% 100%; /* Pure white cards */
+    --card-foreground: 27 42% 18%; /* Coffee brown text */
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --popover-foreground: 27 42% 18%;
+    --primary: 27 74% 27%; /* Rich brown #92400E */
+    --primary-foreground: 0 0% 100%; /* White text on primary */
+    --secondary: 27 87% 35%; /* Darker brown #B45309 */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 45 30% 96%; /* Light cream #EDEEF0 */
+    --muted-foreground: 27 20% 40%; /* Soft brown */
+    --accent: 35 90% 55%; /* Warm amber #D97706 */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 45 20% 85%; /* Soft border color */
+    --input: 45 20% 85%;
+    --ring: 27 74% 27%; /* Primary brown for focus rings */
+    --radius: 1rem; /* More rounded (16px) for friendly feel */
+
+    /* Coffee gradient accents */
+    --coffee-gradient-start: 27 74% 27%;
+    --coffee-gradient-end: 27 87% 35%;
+    --warm-shadow: 27 20% 15%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    /* Dark mode with coffee tones */
+    --background: 27 30% 8%;
+    --foreground: 45 30% 90%;
+    --card: 27 25% 12%;
+    --card-foreground: 45 30% 90%;
+    --popover: 27 25% 12%;
+    --popover-foreground: 45 30% 90%;
+    --primary: 27 74% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 27 87% 50%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 27 20% 20%;
+    --muted-foreground: 45 15% 60%;
+    --accent: 35 90% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 27 20% 25%;
+    --input: 27 20% 25%;
+    --ring: 27 74% 55%;
   }
 }
 
@@ -72,5 +79,98 @@
   }
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     @apply bg-muted-foreground/50;
+  }
+
+  /* Coffee-themed gradient text */
+  .text-gradient-coffee {
+    @apply bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 bg-clip-text text-transparent;
+  }
+
+  /* Soft shadow helper */
+  .shadow-coffee {
+    box-shadow: 0 4px 20px rgba(120, 53, 15, 0.08), 0 1px 3px rgba(120, 53, 15, 0.12);
+  }
+
+  /* Hover lift effect */
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(120, 53, 15, 0.12), 0 2px 6px rgba(120, 53, 15, 0.15);
+  }
+
+  /* Press effect for buttons */
+  .press-effect:active {
+    transform: scale(0.97);
+  }
+}
+
+/* Font family utilities */
+@layer base {
+  .font-heading {
+    font-family: var(--font-heading), sans-serif;
+  }
+  .font-body {
+    font-family: var(--font-body), sans-serif;
+  }
+}
+
+/* Animation utilities */
+@layer utilities {
+  /* Fade in animation */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  /* Slide in from bottom */
+  .animate-slide-in-bottom {
+    animation: slideInBottom 0.5s ease-out;
+  }
+
+  /* Staggered animation delays */
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+
+  /* Keyframes */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInBottom {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse-gentle {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  .animate-pulse-gentle {
+    animation: pulse-gentle 2s ease-in-out infinite;
+  }
+
+  /* Smooth transitions for all interactive elements */
+  .interactive {
+    transition: all 0.2s ease;
   }
 }
