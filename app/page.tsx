@@ -158,15 +158,17 @@ export default function HomePage() {
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-700 to-amber-900 flex items-center justify-center shadow-coffee">
-                <span className="text-xl">☕</span>
-              </div>
+              <img
+                src="/logo-original.jpg"
+                alt="Logo Coffee"
+                className="w-10 h-10 object-cover shadow-coffee"
+              />
               <h1 className="text-3xl sm:text-4xl font-heading font-bold text-gradient-coffee">
                 Tính Lương
               </h1>
             </div>
             <p className="text-sm text-amber-800/70 font-body pl-12">
-              Quản lý lương nhân viên cửa hàng coffee
+              Quản lý lương nhân viên Passport
             </p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
