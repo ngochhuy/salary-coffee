@@ -16,10 +16,9 @@ import {
   MonthlySalaryCalculation,
 } from '@/types';
 import { calculateMonthlySalaries, extractEmployees } from '@/lib/salary-calculator';
-import { getWages, loadScheduleFromDebugFile } from '@/lib/storage';
-
-// Sheet URL from .env (no user input needed)
-const SHEET_URL = process.env.NEXT_PUBLIC_SHEET_URL || '';
+import { getWages, loadScheduleFromDebugFile, getCachedSchedule, setCachedSchedule } from '@/lib/storage';
+import { SHEET_URLS } from '@/lib/sheets-config';
+import { combineSchedules, extractSheetId } from '@/lib/sheets-parser';
 
 export default function HomePage() {
   // State
@@ -57,10 +56,10 @@ export default function HomePage() {
     }
   }, []);
 
-  // Fetch schedule from Google Sheets
-  const handleFetchSchedule = useCallback(async () => {
-    if (!SHEET_URL) {
-      setError('Chưa cấu hình NEXT_PUBLIC_SHEET_URL trong .env.local');
+  // Load and combine Google Sheet schedules (from cache or API fetch)
+  const loadAndCombineSchedules = useCallback(async (forceRefresh = false) => {
+    if (SHEET_URLS.length === 0) {
+      setError('Chưa cấu hình Google Sheets trong .env.local');
       return;
     }
 
@@ -68,33 +67,54 @@ export default function HomePage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/sheets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: SHEET_URL }),
-      });
+      const fetchPromises = SHEET_URLS.map(async (url) => {
+        const sheetId = extractSheetId(url) || 'default';
 
-      const result = await response.json();
+        // Check debug file in development mode
+        if (process.env.NODE_ENV === 'development' && !forceRefresh) {
+          const debugData = await loadScheduleFromDebugFile(sheetId);
+          if (debugData) {
+            return debugData;
+          }
+        }
 
-      if (result.success && result.data?.combinedSchedule) {
-        setSchedule(result.data.combinedSchedule);
-        setRawData(result.data); // Store for debug save
+        // Check local storage cache
+        if (!forceRefresh) {
+          const cached = getCachedSchedule(sheetId);
+          if (cached) {
+            return cached;
+          }
+        }
 
-        console.log('✅ Schedule loaded:', {
-          sheets: result.data.sheetCount,
-          positions: result.data.combinedSchedule.positions.length,
-          days: result.data.combinedSchedule.days.length,
+        // Fetch via sheets API
+        const response = await fetch('/api/sheets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
         });
 
-        // Auto-save to file in dev mode
-        if (process.env.NODE_ENV === 'development') {
-          await saveDebugData(result.data);
+        const result = await response.json();
+        if (result.success && result.data?.combinedSchedule) {
+          // Update cache
+          setCachedSchedule(result.data.combinedSchedule, sheetId);
+          return result.data.combinedSchedule;
+        } else {
+          throw new Error(result.error || `Lỗi khi tải bảng tính`);
         }
-      } else {
-        setError(result.error || 'Lỗi khi fetch dữ liệu');
-      }
+      });
+
+      const schedules = await Promise.all(fetchPromises);
+      const combined = combineSchedules(schedules);
+      
+      setSchedule(combined);
+      setRawData(combined); // Store combined schedule for manual save
+
+      console.log(`✅ Loaded and combined ${schedules.length} sheets successfully:`, {
+        positions: combined.positions.length,
+        days: combined.days.length,
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
+      setError(err instanceof Error ? err.message : 'Lỗi không xác định khi gộp lịch');
     } finally {
       setLoading(false);
     }
@@ -107,24 +127,12 @@ export default function HomePage() {
       const savedWages = getWages();
       setWages(savedWages);
 
-      // DEV MODE: Try loading from debug file first
-      if (process.env.NODE_ENV === 'development') {
-        const debugData = await loadScheduleFromDebugFile();
-        if (debugData) {
-          setSchedule(debugData);
-          console.log('✅ Loaded from debug file');
-          return;
-        }
-      }
-
-      // Fall back to API fetch
-      if (SHEET_URL) {
-        handleFetchSchedule();
-      }
+      // Tải và gộp lịch
+      await loadAndCombineSchedules(false);
     };
 
     loadData();
-  }, []);
+  }, [loadAndCombineSchedules]);
 
   // Extract employees from schedule - memoized to prevent infinite loop
   const employees = useMemo(() => extractEmployees(schedule), [schedule]);
@@ -193,7 +201,7 @@ export default function HomePage() {
               </Button>
             )}
             <Button
-              onClick={handleFetchSchedule}
+              onClick={() => loadAndCombineSchedules(true)}
               disabled={loading}
               className="flex-1 sm:flex-none bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white shadow-coffee press-effect"
             >
@@ -249,14 +257,14 @@ export default function HomePage() {
                   <span className="text-4xl">☕</span>
                 </div>
                 <h3 className="text-xl font-heading font-semibold text-amber-900 mb-2">
-                  {!SHEET_URL ? 'Chưa cấu hình Google Sheets' : 'Đang tải dữ liệu...'}
+                  {SHEET_URLS.length === 0 ? 'Chưa cấu hình Google Sheets' : 'Đang tải dữ liệu...'}
                 </h3>
                 <p className="text-amber-700/70 mb-6">
-                  {!SHEET_URL
-                    ? 'Vui lòng cấu hình URL Google Sheets để bắt đầu tính lương'
+                  {SHEET_URLS.length === 0
+                    ? 'Vui lòng cấu hình URL Google Sheets trong .env.local để bắt đầu tính lương'
                     : 'Vui lòng đợi trong giây lát...'}
                 </p>
-                {!SHEET_URL && (
+                {SHEET_URLS.length === 0 && (
                   <div className="inline-block px-4 py-2 bg-amber-100 rounded-lg text-sm text-amber-800">
                     <code className="text-xs">NEXT_PUBLIC_SHEET_URL=your_sheet_url</code>
                   </div>

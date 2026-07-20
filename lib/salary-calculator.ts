@@ -26,10 +26,39 @@ export function calculateShiftHours(shift: ShiftData): { hours: number; allowanc
     computedShiftType = 'unknown';
   }
 
-  // Calculate allowance: if hours > threshold, get allowance
-  const allowance = hours > ALLOWANCE_CONFIG.THRESHOLD_HOURS ? ALLOWANCE_CONFIG.AMOUNT : 0;
+  // Calculate allowance: if hours >= threshold, get allowance
+  const allowance = hours >= ALLOWANCE_CONFIG.THRESHOLD_HOURS ? ALLOWANCE_CONFIG.AMOUNT : 0;
 
   return { hours, allowance, computedShiftType };
+}
+
+/**
+ * Format decimal hours to readable string like "6h30" or "14h"
+ */
+function formatTimeValue(decimalHour: number): string {
+  const h = Math.floor(decimalHour);
+  const m = Math.round((decimalHour - h) * 60);
+  return m > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${h}h`;
+}
+
+/**
+ * Get readable shift time range label
+ */
+export function getShiftTimeLabel(shift: ShiftData): string {
+  if (shift.shiftType === 'custom' && shift.customHours) {
+    const { start, end } = shift.customHours;
+    return `${formatTimeValue(start)}-${formatTimeValue(end)}`;
+  }
+  
+  switch (shift.shiftType) {
+    case 'M-14h': return '6:30-14:00';
+    case 'M': return '6:30-15:00';
+    case 'N': return '14:00-22:00';
+    case 'ca1': return '6:30-12:00';
+    case 'ca2': return '12:00-19:00';
+    case 'ca3': return '18:00-22:00';
+    default: return '';
+  }
 }
 
 /**
@@ -91,6 +120,7 @@ export function aggregateEmployeeData(
         hours,
         shiftType: computedShiftType,
         allowance,
+        timeLabel: getShiftTimeLabel(cell),
       });
 
       employeeData.set(cleanedEmployee, current);
@@ -265,6 +295,7 @@ export function calculateMonthlySalaries(
         hours,
         shiftType: computedShiftType,
         allowance,
+        timeLabel: getShiftTimeLabel(cell),
       });
 
       monthInfo.employeeData.set(cleanedEmployee, current);

@@ -65,63 +65,78 @@ export function updateWage(employeeName: string, hourlyWage: number): void {
 /**
  * Get cached schedule data from localStorage
  */
-export function getCachedSchedule(): ParsedSchedule | null {
-  return getStorageItem<ParsedSchedule | null>(STORAGE_KEYS.SHEET_DATA, null);
+export function getCachedSchedule(sheetId?: string): ParsedSchedule | null {
+  const key = sheetId ? `${STORAGE_KEYS.SHEET_DATA}-${sheetId}` : STORAGE_KEYS.SHEET_DATA;
+  return getStorageItem<ParsedSchedule | null>(key, null);
 }
 
 /**
  * Save schedule data to localStorage
  */
-export function setCachedSchedule(schedule: ParsedSchedule): void {
-  setStorageItem(STORAGE_KEYS.SHEET_DATA, schedule);
+export function setCachedSchedule(schedule: ParsedSchedule, sheetId?: string): void {
+  const key = sheetId ? `${STORAGE_KEYS.SHEET_DATA}-${sheetId}` : STORAGE_KEYS.SHEET_DATA;
+  setStorageItem(key, schedule);
 }
 
 /**
  * Get last fetch timestamp
  */
-export function getLastFetch(): Date | null {
-  const timestamp = getStorageItem<string | null>(STORAGE_KEYS.LAST_FETCH, null);
+export function getLastFetch(sheetId?: string): Date | null {
+  const key = sheetId ? `${STORAGE_KEYS.LAST_FETCH}-${sheetId}` : STORAGE_KEYS.LAST_FETCH;
+  const timestamp = getStorageItem<string | null>(key, null);
   return timestamp ? new Date(timestamp) : null;
 }
 
 /**
  * Update last fetch timestamp
  */
-export function updateLastFetch(): void {
-  setStorageItem(STORAGE_KEYS.LAST_FETCH, new Date().toISOString());
+export function updateLastFetch(sheetId?: string): void {
+  const key = sheetId ? `${STORAGE_KEYS.LAST_FETCH}-${sheetId}` : STORAGE_KEYS.LAST_FETCH;
+  setStorageItem(key, new Date().toISOString());
 }
 
 /**
  * Clear all cached data (for refresh)
  */
-export function clearCachedData(): void {
+export function clearCachedData(sheetId?: string): void {
   if (typeof window !== 'undefined') {
-    window.localStorage.removeItem(STORAGE_KEYS.SHEET_DATA);
-    window.localStorage.removeItem(STORAGE_KEYS.LAST_FETCH);
+    const dataKey = sheetId ? `${STORAGE_KEYS.SHEET_DATA}-${sheetId}` : STORAGE_KEYS.SHEET_DATA;
+    const fetchKey = sheetId ? `${STORAGE_KEYS.LAST_FETCH}-${sheetId}` : STORAGE_KEYS.LAST_FETCH;
+    window.localStorage.removeItem(dataKey);
+    window.localStorage.removeItem(fetchKey);
   }
 }
 
 // ==================== DEBUG FILE LOADING (DEV ONLY) ====================
 
 /**
- * Load schedule from debug file (public/data/schedule.json)
+ * Load schedule from debug file (public/data/schedule.json or public/data/schedule-[sheetId].json)
  * Only works in development mode
  */
-export async function loadScheduleFromDebugFile(): Promise<ParsedSchedule | null> {
+export async function loadScheduleFromDebugFile(sheetId?: string): Promise<ParsedSchedule | null> {
   if (process.env.NODE_ENV !== 'development') {
     console.warn('⚠️ Debug file loading only works in development mode');
     return null;
   }
 
   try {
-    const response = await fetch('/data/schedule.json');
-    if (!response.ok) {
-      console.warn('⚠️ Debug file not found. Fetch from API first.');
-      return null;
+    let response;
+    if (sheetId) {
+      response = await fetch(`/data/schedule-${sheetId}.json`);
+      if (!response.ok) {
+        // Do not fall back to schedule.json for sheet-specific lookups
+        return null;
+      }
+    } else {
+      response = await fetch('/data/schedule.json');
+      if (!response.ok) {
+        console.warn('⚠️ Debug file not found. Fetch from API first.');
+        return null;
+      }
     }
 
     const data = await response.json();
-    console.log('✅ Loaded from debug file:', data);
+    console.log(`✅ Loaded from debug file (${sheetId || 'default'}):`, data);
 
     // Handle both formats: direct schedule or wrapped in { combinedSchedule }
     if (data.combinedSchedule) {
@@ -133,3 +148,4 @@ export async function loadScheduleFromDebugFile(): Promise<ParsedSchedule | null
     return null;
   }
 }
+

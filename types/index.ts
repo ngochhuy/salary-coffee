@@ -37,6 +37,7 @@ export interface SalaryCalculation {
     hours: number;
     shiftType: string;
     allowance: number;
+    timeLabel?: string;
   }>;
   // Shift breakdown by type
   shiftBreakdown: {

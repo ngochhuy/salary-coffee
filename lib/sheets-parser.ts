@@ -90,13 +90,36 @@ export function parseCell(cellValue: string, date: string, columnOffset: number)
 
   // PRIORITY 1: Check content markers first
 
-  // Pattern 1: "Nhật M - 14h" or "Linh M - 14h (thử việc)" (shift with end time)
+  // Pattern 1: "Nhật M - 14h" or "Trúc N - 21h (thử việc)" (shift with end time)
   // Support optional parenthetical notes at the end
-  const withTimeMatch = trimmed.match(/^(.+?) ([MN])\s+[-–—]\s*(\d+)h(?:\s*\(.*?\))?$/);
+  const withTimeMatch = trimmed.match(/^(.+?) ([MN])\s+[-–—]\s*(\d+)h(\d{2})?(?:\s*\(.*?\))?$/);
   if (withTimeMatch) {
+    const employeeName = withTimeMatch[1].trim();
+    const shiftTypeLetter = withTimeMatch[2];
+    const endHour = parseInt(withTimeMatch[3], 10);
+    const endMinute = withTimeMatch[4] ? parseInt(withTimeMatch[4], 10) : 0;
+    const endDecimal = endHour + endMinute / 60;
+
+    // Standard M - 14h (starts at 6:30, ends at 14:00, 7.5 hours)
+    if (shiftTypeLetter === 'M' && endHour === 14 && endMinute === 0) {
+      return {
+        employee: employeeName,
+        shiftType: 'M-14h',
+        date,
+        columnOffset,
+      };
+    }
+
+    // Otherwise, treat as a custom shift dynamically
+    // M starts at 6:30 (6.5), N starts at 14:00 (14)
+    const startHour = shiftTypeLetter === 'M' ? 6.5 : 14;
     return {
-      employee: withTimeMatch[1].trim(),
-      shiftType: (withTimeMatch[2] + '-' + withTimeMatch[3] + 'h') as 'M-14h',
+      employee: employeeName,
+      shiftType: 'custom',
+      customHours: {
+        start: startHour,
+        end: endDecimal,
+      },
       date,
       columnOffset,
     };
@@ -498,3 +521,121 @@ export function extractEmployees(schedule: ParsedSchedule): string[] {
 
   return Array.from(employeeSet).sort();
 }
+
+/**
+ * Parse date string D/M or D/M/YYYY into a Date object for comparison
+ */
+export function parseDateStringToDate(dateStr: string): Date {
+  const parts = dateStr.trim().split('/');
+  const day = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1; // 0-indexed month
+  const year = parts[2] ? parseInt(parts[2], 10) : new Date().getFullYear();
+  return new Date(year, month, day);
+}
+
+/**
+ * Combine multiple parsed schedules into one, sorting dates chronologically
+ * and overwriting older schedule data with newer ones on duplicate days.
+ */
+export function combineSchedules(schedules: ParsedSchedule[]): ParsedSchedule {
+  if (schedules.length === 0) {
+    return { positions: [], days: [], cells: [[]] };
+  }
+
+  if (schedules.length === 1) {
+    return schedules[0];
+  }
+
+  const combined: ParsedSchedule = {
+    positions: [],
+    days: [],
+    cells: [],
+  };
+
+  const allUniqueDates = new Set<string>(); // Unique dates (without 3x repetition)
+  const allPositions = new Set<string>();
+
+  // Extract unique dates and positions from schedules
+  for (const schedule of schedules) {
+    schedule.positions.forEach((p) => allPositions.add(p));
+
+    const seenDates = new Set<string>();
+    for (let i = 0; i < schedule.days.length; i++) {
+      const date = schedule.days[i];
+      if (!seenDates.has(date)) {
+        seenDates.add(date);
+        allUniqueDates.add(date);
+      }
+    }
+  }
+
+  combined.positions = Array.from(allPositions).sort();
+
+  // Create days array with each date repeated 3 times (for Ca1, Ca2, Ca3)
+  const SHIFTS_PER_DAY = 3;
+  
+  // Sort dates chronologically using custom date parser
+  const sortedDates = Array.from(allUniqueDates).sort((a, b) => {
+    return parseDateStringToDate(a).getTime() - parseDateStringToDate(b).getTime();
+  });
+  
+  const repeatedDays: string[] = [];
+  for (const date of sortedDates) {
+    for (let shift = 0; shift < SHIFTS_PER_DAY; shift++) {
+      repeatedDays.push(date);
+    }
+  }
+  combined.days = repeatedDays;
+
+  // Create a map to track cells by position, date, and columnOffset
+  // Key format: "position|date|columnOffset" where columnOffset is 0=Ca1, 1=Ca2, 2=Ca3
+  const cellMap = new Map<string, ShiftData>();
+
+  // Process schedules: we expect them to be provided in chronological order
+  // (e.g. schedules[0] = old schedule, schedules[1] = new schedule)
+  // When we iterate, the later schedules will OVERWRITE duplicate entries in the map.
+  for (const schedule of schedules) {
+    for (let rowIdx = 0; rowIdx < schedule.positions.length; rowIdx++) {
+      const position = schedule.positions[rowIdx];
+
+      for (let colIdx = 0; colIdx < schedule.days.length; colIdx++) {
+        const cell = schedule.cells[rowIdx]?.[colIdx];
+
+        if (cell && cell.employee) {
+          const key = `${position}|${cell.date}|${cell.columnOffset}`;
+          // Overwrite always so the newest schedule overrides any duplicates
+          cellMap.set(key, cell);
+        }
+      }
+    }
+  }
+
+  // Build combined cells array
+  for (const position of combined.positions) {
+    const row: ShiftData[] = [];
+
+    for (let colIdx = 0; colIdx < combined.days.length; colIdx++) {
+      const date = combined.days[colIdx];
+      const columnOffset = colIdx % SHIFTS_PER_DAY; // 0=Ca1, 1=Ca2, 2=Ca3
+
+      const key = `${position}|${date}|${columnOffset}`;
+      const cell = cellMap.get(key);
+
+      if (cell) {
+        row.push(cell);
+      } else {
+        row.push({
+          employee: '',
+          shiftType: null,
+          date,
+          columnOffset,
+        });
+      }
+    }
+
+    combined.cells.push(row);
+  }
+
+  return combined;
+}
+

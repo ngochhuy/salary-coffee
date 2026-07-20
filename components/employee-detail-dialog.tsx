@@ -209,6 +209,11 @@ export function EmployeeDetailDialog({
                           <Badge variant="outline" className="border-amber-200 text-amber-800 bg-amber-50">
                             {SHIFT_TYPE_LABELS[shift.shiftType] || shift.shiftType}
                           </Badge>
+                          {shift.shiftType === 'custom' && shift.timeLabel && (
+                            <span className="text-xs text-amber-700/80 ml-2 font-medium">
+                              ({shift.timeLabel})
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell className="text-right text-amber-800">{formatHours(shift.hours)}</TableCell>
                         <TableCell className="text-right">
