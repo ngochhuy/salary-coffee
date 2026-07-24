@@ -3,8 +3,7 @@ import { extractSheetId, parseCSV, combineSchedules } from '@/lib/sheets-parser'
 import { ParsedSchedule, ShiftData } from '@/types';
 
 export const runtime = 'edge';
-export const revalidate = 604800; // Cache 1 tuần (7 ngày * 24h * 3600s = 604,800 giây)
-
+export const revalidate = 0; // Luôn luôn lấy dữ liệu mới nhất từ Google Sheets khi API được gọi
 
 /**
  * Parse workbook HTML to extract all sheet GIDs
@@ -32,7 +31,7 @@ function extractSheetGIDs(html: string): string[] {
  */
 async function fetchSheetCSV(sheetId: string, gid: string): Promise<string> {
   const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
-  const response = await fetch(csvUrl, { next: { revalidate: 604800 } });
+  const response = await fetch(csvUrl, { cache: 'no-store' });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch sheet ${gid}: ${response.statusText}`);
@@ -69,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     // First, fetch the workbook HTML to find all sheet GIDs
     const htmlUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/htmlview`;
-    const htmlResponse = await fetch(htmlUrl, { next: { revalidate: 604800 } });
+    const htmlResponse = await fetch(htmlUrl, { cache: 'no-store' });
 
     if (!htmlResponse.ok) {
       return NextResponse.json(
